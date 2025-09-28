@@ -1,0 +1,26 @@
+TO CHECK MEMORY CPU DISK
+
+#!/bin/bash
+# system info script
+# fetch total memory, cpu and available disk space
+
+echo "======System Information====="
+
+# Total Memory in MB/GB
+total_mem=$(free -h | awk '/^Mem:/ {print $2}')
+used_mem=$(free -h | awk '/^Mem:/ {print $3}')
+echo "Total Memory: $total_mem"
+echo "Used Memory: $used_mem"
+
+# CPU Utilization (percentage over 1 second)
+cpu_idle=$(top -bn2 | grep "Cpu(s)" | tail -n1 | awk '{print $8}')
+cpu_usage=$(echo "100 - $cpu_idle" | bc)
+echo "CPU Utilization: $cpu_usage"
+
+# Disk Space Used (root filesystem)
+disk_total=$(df -h / | awk 'NR==2 {print $2}')
+disk_avail=$(df -h / | awk 'NR==2 {print $4}')
+echo "Disk Total: $disk_total"
+echo "Disk Avail: $disk_avail"
+
+echo "================================="
