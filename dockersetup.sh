@@ -20,9 +20,12 @@ sudo apt update -y
 
 #docker package
 sudo apt install docker-ce -y docker-ce-cli -y containerd.io -y docker-buildx-plugin -y docker-compose-plugin -y
-#docker check
-sudo systemctl status docker
 
 #post check
 sudo usermod -aG docker $USER
 newgrp docker
+
+#docker check
+sudo systemctl status docker
+
+
