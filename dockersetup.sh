@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Add Docker's official GPG key:
 sudo apt update -y && apt upgrade -y
 sudo apt install ca-certificates curl -y
