@@ -1,18 +1,30 @@
 #!/bin/bash
-# Ubuntu 24.04 Jenkins Installation - Fixed for 2026
+# USE UBUNTU24.04 - INSTANCE: 2GB RAM + 2VCPU MIN - WILL ONLY WORK
 
+###system-update&upgrade##
 sudo apt update -y
-sudo apt install -y openjdk-17-jdk fontconfig   # Use Java 17 (recommended for 24.04)
+sudo apt upgrade -y
 
-# Add correct Jenkins GPG key (2025+ version)
-curl -fsSL https://pkg.jenkins.io/debian/jenkins.io.key | sudo gpg --dearmor -o /usr/share/keyrings/jenkins.gpg
+###java-11,8,3,21-installation##
+
+sudo apt install openjdk-11-jdk -y
+sudo apt install openjdk-8-jdk -y
+sudo apt install fontconfig openjdk-21-jre -y
+
+###maven-installation###
+sudo apt install maven -y
+
+# Add correct Jenkins GPG key (2026+ version)
+sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+  https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
 
 # Add repo with proper signed-by
-echo "deb [signed-by=/usr/share/keyrings/jenkins.gpg arch=amd64] https://pkg.jenkins.io/debian-stable binary/" | \
-  sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
 
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]" \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
 sudo apt update -y
-sudo apt install -y jenkins
+sudo apt install jenkins -y
 
 # Start and enable service
 sudo systemctl start jenkins
