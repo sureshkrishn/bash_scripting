@@ -1,0 +1,53 @@
+$source = "Y:\mssql-dbs"
+$destination = "D:\sql-bak"
+
+Copy-Item -Path "$source\*" -Destination $destination -Recurse -Force
+
+# Set variables
+$backupFolder = "D:\sql-bak"
+$databaseListFile = "D:\ms-db.txt"
+$newDataFolder = 'D:\Program Files (x86)\Plesk\Databases\MSSQL\MSSQL16.MSSQLSERVER2022\MSSQL\DATA'
+$newLogFolder = 'D:\Program Files (x86)\Plesk\Databases\MSSQL\MSSQL16.MSSQLSERVER2022\MSSQL\DATA'
+$serverInstance = "PLESK9800\MSSQLSERVER2022"
+
+# Load SMO Assemblies
+Add-Type -AssemblyName "Microsoft.SqlServer.Smo" 
+Add-Type -AssemblyName "Microsoft.SqlServer.SmoExtended"
+Add-Type -AssemblyName "Microsoft.SqlServer.ConnectionInfo"
+
+if (Test-Path $databaseListFile) {
+    $databases = Get-Content $databaseListFile
+
+    foreach ($database in $databases) {
+        $backupFile = Join-Path -Path $backupFolder -ChildPath "$database.bak"
+
+        if (Test-Path $backupFile) {
+
+            # Get logical file names using Invoke-Sqlcmd
+            $sql = "RESTORE FILELISTONLY FROM DISK = '$backupFile'"
+            $fileList = Invoke-Sqlcmd -Query $sql -ServerInstance $serverInstance
+
+            # Extract logical names
+            $dataLogicalName = ($fileList | Where-Object { $_.Type -eq 'D' }).LogicalName
+            $logLogicalName = ($fileList | Where-Object { $_.Type -eq 'L' }).LogicalName
+
+            Write-Host "Detected Logical Data File: $dataLogicalName"
+            Write-Host "Detected Logical Log File: $logLogicalName"
+
+            # Define relocate objects using actual names
+            $dataFile = New-Object Microsoft.SqlServer.Management.Smo.RelocateFile($dataLogicalName, "$newDataFolder\$database.mdf")
+            $logFile = New-Object Microsoft.SqlServer.Management.Smo.RelocateFile($logLogicalName, "$newLogFolder\$database.ldf")
+
+            # Perform restore
+            Restore-SqlDatabase -ServerInstance $serverInstance -Database $database `
+                -BackupFile $backupFile -ReplaceDatabase -RelocateFile $dataFile, $logFile
+
+            Write-Host "Database '$database' restored successfully."
+        }
+        else {
+            Write-Host "Backup file not found for '$database'."
+        }
+    }
+} else {
+    Write-Host "Database list file not found."
+}
