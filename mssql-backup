@@ -1,0 +1,32 @@
+# Path to list of databases
+$dbList = "D:\mssql.txt"
+
+# SQL Server instance name
+$instance = ".\MSSQLSERVER2012"   # change if needed, e.g. "SERVERNAME\SQLEXPRESS"
+
+# Backup folder
+$backupPath = "D:\mssql-dbs"
+
+# Create backup directory if not exists
+if (-not (Test-Path $backupPath)) {
+    New-Item -ItemType Directory -Path $backupPath | Out-Null
+}
+
+# Read database names
+$databases = Get-Content $dbList
+
+foreach ($db in $databases) {
+
+    #$timestamp = (Get-Date).ToString("yyyyMMdd_HHmmss")
+    $backupFile = "$backupPath\$db.bak"
+
+    Write-Host "Backing up $db ..."
+
+    $query = "BACKUP DATABASE [$db] TO DISK = N'$backupFile' WITH INIT;"
+
+    Invoke-Sqlcmd -ServerInstance $instance -Query $query -QueryTimeout 6000
+
+    Write-Host "$db backup completed.`n"
+}
+
+Write-Host "All backups finished!"
