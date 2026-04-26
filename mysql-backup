@@ -1,0 +1,46 @@
+# Backup-MySQL.ps1
+# Reads database names from D:\db.txt and backs them up to D:\mysql_backups
+
+# --- Configuration ---
+$mysqlBinPath = "C:\Program Files\MySQL\MySQL Server 5.6\bin"   # or MySQL path, e.g. C:\Program Files\MySQL\MySQL Server 8.0\bin
+$backupDir = "D:\mysql_backups"
+$copyDir = "Y:\mysql"
+$dbListFile = "D:\db.txt"
+
+# MySQL credentials
+$dbUser = "admin"
+$dbPassword = "pleskeu2_873"
+$dbHost = "localhost"
+
+# --- Create backup directory if it doesn't exist ---
+if (!(Test-Path $backupDir)) {
+    New-Item -Path $backupDir -ItemType Directory | Out-Null
+}
+
+# --- Read database names ---
+if (!(Test-Path $dbListFile)) {
+    Write-Host "Database list file not found: $dbListFile"
+    exit
+}
+
+$dbList = Get-Content $dbListFile | Where-Object { $_.Trim() -ne "" }
+
+# --- Backup each database ---
+foreach ($dbName in $dbList) {
+    $backupFile = Join-Path $backupDir "$dbName.sql"
+
+    Write-Host "Backing up database: $dbName ..."
+
+    $mysqldump = Join-Path $mysqlBinPath "mysqldump.exe"
+    $arguments = "--user=$dbUser --password=$dbPassword --host=$dbHost --routines --events --databases $dbName --result-file=""$backupFile"""
+
+    # Run mysqldump
+    $process = Start-Process -FilePath $mysqldump -ArgumentList $arguments -NoNewWindow -Wait -PassThru
+
+    if ($process.ExitCode -eq 0) {
+        Write-Host "✅ Backup completed for $dbName -> $backupFile"
+        Copy-Item -Path $backupFile -Destination $copyDir -Force
+    } else {
+        Write-Host "❌ Backup failed for $dbName (exit code: $($process.ExitCode))"
+    }
+}
