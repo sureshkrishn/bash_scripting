@@ -1,0 +1,31 @@
+# MariaDB client path
+$mariadbExe = "C:\Program Files\MariaDB 11.8\bin\mysql.exe"
+
+# MySQL credentials
+$user = "admin"
+$password = "Hefai8-Pilyo1-Misin1=Gumeb7"  # Replace with your actual password
+
+
+# List of database names
+$dbListFile = "D:\mydb.txt"
+
+# SQL backup location
+$backupPath = "D:\mysql"
+
+# Loop through each database
+Get-Content $dbListFile | ForEach-Object {
+    $dbName = $_.Trim()
+    if ($dbName) {
+        $sqlFile = Join-Path $backupPath "$dbName.sql"
+        if (Test-Path $sqlFile) {
+            Write-Host "`nRestoring database '$dbName' from '$sqlFile'..."
+
+            # Call CMD to handle redirection properly
+            $cmd = "`"$mariadbExe`" -u $user -p$password $dbName < `"$sqlFile`""
+            cmd.exe /c $cmd
+            #echo $cmd
+        } else {
+            Write-Warning "SQL file not found for database '$dbName'"
+        }
+    }
+}
